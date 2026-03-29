@@ -1,6 +1,6 @@
 # Pipe
 
-A browser extension that removes selected elements from YouTube’s interface based on user preferences.
+A Firefox extension that removes selected elements from YouTube’s interface based on user preferences.
 
 It works by injecting CSS rules and dynamically updating them according to stored settings, allowing users to hide components such as Shorts, titles, descriptions, notifications, comments, recommendations, and other UI elements.
 
