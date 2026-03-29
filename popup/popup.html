@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pipe</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+
+  <body>
+    <header class="header">
+      <img src="../icons/pipe-logo.svg" alt="" class="header__logo" width="24" height="24" />
+      <h1 class="header__title">Pipe</h1>
+    </header>
+
+    <main class="filters">
+
+      <!-- Shorts -->
+      <label class="filter" for="toggle-shorts">
+        <span class="filter__icon" aria-hidden="true">▶️</span>
+        <span class="filter__info">
+          <span class="filter__name">Shorts</span>
+          <span class="filter__desc">Hides the Shorts shelf, sidebar link, and short videos in search results.</span>
+        </span>
+        <span class="toggle" role="switch" aria-checked="false">
+          <input
+            class="toggle__input"
+            type="checkbox"
+            id="toggle-shorts"
+            data-key="hideShorts"
+          />
+          <span class="toggle__track">
+            <span class="toggle__thumb"></span>
+          </span>
+        </span>
+      </label>
+
+      <hr class="divider" />
+
+      <!-- Title & Description -->
+      <label class="filter" for="toggle-title">
+        <span class="filter__icon" aria-hidden="true">📄</span>
+        <span class="filter__info">
+          <span class="filter__name">Title &amp; Description</span>
+          <span class="filter__desc">Hides the video title and description panel on watch pages.</span>
+        </span>
+        <span class="toggle" role="switch" aria-checked="false">
+          <input
+            class="toggle__input"
+            type="checkbox"
+            id="toggle-title"
+            data-key="hideTitleDescription"
+          />
+          <span class="toggle__track">
+            <span class="toggle__thumb"></span>
+          </span>
+        </span>
+      </label>
+
+      <hr class="divider" />
+
+      <!-- Notifications -->
+      <label class="filter" for="toggle-notifications">
+        <span class="filter__icon" aria-hidden="true">🔔</span>
+        <span class="filter__info">
+          <span class="filter__name">Notifications</span>
+          <span class="filter__desc">Hides the notification bell from the top bar.</span>
+        </span>
+        <span class="toggle" role="switch" aria-checked="false">
+          <input
+            class="toggle__input"
+            type="checkbox"
+            id="toggle-notifications"
+            data-key="hideNotifications"
+          />
+          <span class="toggle__track">
+            <span class="toggle__thumb"></span>
+          </span>
+        </span>
+      </label>
+
+      <hr class="divider" />
+
+      <!-- Comments -->
+      <label class="filter" for="toggle-comments">
+        <span class="filter__icon" aria-hidden="true">💬</span>
+        <span class="filter__info">
+          <span class="filter__name">Comments</span>
+          <span class="filter__desc">Hides the entire comments section on watch pages.</span>
+        </span>
+        <span class="toggle" role="switch" aria-checked="false">
+          <input
+            class="toggle__input"
+            type="checkbox"
+            id="toggle-comments"
+            data-key="hideComments"
+          />
+          <span class="toggle__track">
+            <span class="toggle__thumb"></span>
+          </span>
+        </span>
+      </label>
+
+      <hr class="divider" />
+
+      <!-- Recommendations -->
+      <label class="filter" for="toggle-recommendations">
+        <span class="filter__icon" aria-hidden="true">🎯</span>
+        <span class="filter__info">
+          <span class="filter__name">Recommendations</span>
+          <span class="filter__desc">Hides the "Up Next" sidebar, home feed, and end-screen suggestions.</span>
+        </span>
+        <span class="toggle" role="switch" aria-checked="false">
+          <input
+            class="toggle__input"
+            type="checkbox"
+            id="toggle-recommendations"
+            data-key="hideRecommendations"
+          />
+          <span class="toggle__track">
+            <span class="toggle__thumb"></span>
+          </span>
+        </span>
+      </label>
+
+    </main>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
