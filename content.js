@@ -1,125 +1,101 @@
-/**
- * content.js — Injected into every YouTube page.
- *
- * Strategy
- * ────────
- * Inject a <style> tag synchronously at document_start (before any HTML is
- * parsed), then fill it with the correct CSS rules as soon as the storage
- * read resolves. This prevents any flash of unhidden content.
- *
- * YouTube event glossary (relevant to this script):
- *   yt-navigate-finish   — fired on every SPA navigation (clicking a link).
- *                          NOT fired on a fresh page load.
- *   yt-page-data-updated — fired when YouTube's polymer components have
- *                          finished rendering. Fires on both fresh loads AND
- *                          SPA navigations, so it covers all cases.
- */
+"use strict";
 
-// ─── Selector map ─────────────────────────────────────────────────────────────
-// Each key matches a settings key; the value lists CSS selectors to hide.
+const STYLE_ID = "pipe-injected-styles";
 
-const FILTER_RULES = {
+const RULES = {
   hideShorts: [
+    'ytd-rich-section-renderer:has(ytd-rich-shelf-renderer[is-shorts])',
+    'ytd-rich-shelf-renderer[is-shorts]',
+    'ytd-reel-shelf-renderer',
     'ytd-rich-item-renderer:has(a[href^="/shorts/"])',
     'ytd-video-renderer:has(a[href^="/shorts/"])',
     'ytd-grid-video-renderer:has(a[href^="/shorts/"])',
     'grid-shelf-view-model:has(ytm-shorts-lockup-view-model)',
-    'ytd-guide-entry-renderer:has(a[href="/shorts/"])',
-    'ytd-mini-guide-entry-renderer:has(a[href="/shorts/"])',
-    'yt-chip-cloud-chip-renderer',
-    'ytd-search-filter-renderer:has(a[href="/results?search_query=youtube+shorts"])',
+    'ytd-guide-entry-renderer:has(a[title="Shorts"])',
+    'ytd-mini-guide-entry-renderer[aria-label="Shorts"]',
+    'ytd-search-filter-renderer:has(a[href*="youtube+shorts"])',
   ],
-
-  hideTitleDescription: [
+  hideTitle: [
     'ytd-watch-metadata #title',
+    'ytd-watch-metadata h1.ytd-watch-metadata',
+  ],
+  hideDescription: [
     'ytd-watch-metadata #description',
     'ytd-watch-metadata ytd-text-inline-expander',
+    '#description-inline-expander',
   ],
-
   hideNotifications: [
     '#notification-icon-label',
     'ytd-notification-topbar-button-renderer',
   ],
-
   hideComments: [
     'ytd-comments#comments',
+    '#comments',
   ],
-
   hideRecommendations: [
     '#secondary #related',
-    "'ytd-browse[page-subtype='home'] ytd-rich-grid-renderer",
-    '.ytp-endscreen-content',
+    'ytd-browse[page-subtype="home"] ytd-rich-grid-renderer',
+    'ytd-compact-video-renderer',
+    'ytd-watch-next-secondary-results-renderer',
     'ytd-feed-nudge-renderer',
   ],
 };
 
-// ─── Style injection ──────────────────────────────────────────────────────────
+let currentCSS = "";
 
-const STYLE_ID = "yt-cleaner-styles";
-
-// Cached so the MutationObserver can re-inject without a storage read.
-let _currentSettings = {};
-
-function buildCSS(settings) {
-  return Object.entries(FILTER_RULES)
-    .filter(([key]) => settings[key] === true)
-    .flatMap(([, selectors]) => selectors)
-    .map((sel) => `${sel} { display: none !important; }`)
-    .join("\n");
-}
-
-function applyStyles(settings) {
-  _currentSettings = settings;
-
-  let styleEl = document.getElementById(STYLE_ID);
-  if (!styleEl) {
-    styleEl = document.createElement("style");
-    styleEl.id = STYLE_ID;
-    (document.head || document.documentElement).appendChild(styleEl);
+const buildCSS = (settings) => {
+  const selectors = [];
+  for (const [key, sels] of Object.entries(RULES)) {
+    if (settings[key]) selectors.push(...sels);
   }
+  if (!selectors.length) return "";
+  return selectors.join(",\n") + " { display: none !important; }";
+};
 
-  styleEl.textContent = buildCSS(settings);
+const ensureStyleEl = () => {
+  let el = document.getElementById(STYLE_ID);
+  if (!el) {
+    el = document.createElement("style");
+    el.id = STYLE_ID;
+    (document.head || document.documentElement).appendChild(el);
+    el.textContent = currentCSS;
+  }
+  return el;
+};
+
+const apply = (settings) => {
+  currentCSS = buildCSS(settings);
+  ensureStyleEl().textContent = currentCSS;
+};
+
+ensureStyleEl();
+
+const guard = new MutationObserver(() => {
+  const el = document.getElementById(STYLE_ID);
+  if (!el || el.textContent !== currentCSS) {
+    ensureStyleEl().textContent = currentCSS;
+  }
+});
+guard.observe(document.documentElement, { childList: true, subtree: false });
+if (document.head) {
+  guard.observe(document.head, { childList: true });
+} else {
+  document.addEventListener("DOMContentLoaded", () => {
+    if (document.head) guard.observe(document.head, { childList: true });
+  }, { once: true });
 }
 
-// ─── Synchronous setup (runs before any HTML is parsed) ──────────────────────
-// Inject an empty style tag and the removal guard immediately, without
-// waiting for the async storage read. This claims our spot in <head> early.
+browser.storage.sync.get(null).then(apply);
 
-(function setupEarly() {
-  const styleEl = document.createElement("style");
-  styleEl.id = STYLE_ID;
-  (document.head || document.documentElement).appendChild(styleEl);
-
-  // Guard: if YouTube ever removes our tag, re-inject it.
-  const observer = new MutationObserver(() => {
-    if (!document.getElementById(STYLE_ID)) {
-      applyStyles(_currentSettings);
-    }
-  });
-  observer.observe(document.head || document.documentElement, { childList: true });
-})();
-
-// ─── Async init: fill the style tag with real rules ──────────────────────────
-
-async function init() {
-  const settings = await browser.storage.sync.get(null);
-  applyStyles(settings);
-}
-
-init();
-
-// ─── Re-apply when YouTube components finish rendering ───────────────────────
-// yt-page-data-updated fires on BOTH fresh page loads and SPA navigations,
-// making it the most reliable hook for ensuring styles are applied after
-// YouTube's polymer components have initialised.
-
-window.addEventListener("yt-page-data-updated", () => {
-  browser.storage.sync.get(null).then(applyStyles);
+window.addEventListener("yt-navigate-finish", () => {
+  browser.storage.sync.get(null).then(apply);
 });
 
-// ─── React to settings changes pushed by the background script ───────────────
+window.addEventListener("yt-page-data-updated", () => {
+  browser.storage.sync.get(null).then(apply);
+});
 
-browser.runtime.onMessage.addListener((message) => {
-  if (message.type !== "SETTINGS_CHANGED") return;
-  browser.storage.sync.get(null).then(applyStyles);
+browser.runtime.onMessage.addListener((msg) => {
+  if (msg?.type !== "pipe:settings-changed") return;
+  browser.storage.sync.get(null).then(apply);
 });
