@@ -1,0 +1,18 @@
+version: 2
+
+# The cooldowns hold off new releases for a week. A malicious release is usually
+# caught and pulled within days, so by then it's gone.
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7

@@ -1,0 +1,47 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call: # release.yml runs it in full before publishing
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+
+      - name: Test
+        run: node --test test/*.test.js
+
+      # No package needs an install script; skipping them shuts the usual malware entry point.
+      - name: Install dev tools
+        run: npm ci --ignore-scripts --no-fund
+
+      # Same validator AMO runs when signing; warnings fail too, so signing won't surprise us.
+      # The extension lives at the repo root, so keep dev files out of what web-ext sees.
+      - name: Lint
+        run: >-
+          npx --no-install web-ext lint --source-dir . --warnings-as-errors
+          --ignore-files "test/**" package.json package-lock.json README.md
+
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+
+      - name: Install dev tools
+        run: npm ci --ignore-scripts --no-fund
+
+      # release.yml calls this workflow, so a high or critical advisory also blocks releases.
+      - name: Known vulnerabilities
+        run: npm audit --audit-level=high

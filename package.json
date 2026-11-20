@@ -1,0 +1,9 @@
+{
+  "name": "pipe-dev",
+  "private": true,
+  "description": "Dev tooling for the pipe extension (lint and signing). Not shipped in the extension.",
+  "license": "MIT",
+  "devDependencies": {
+    "web-ext": "10.8.0"
+  }
+}

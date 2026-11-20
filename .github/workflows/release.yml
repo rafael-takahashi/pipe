@@ -1,0 +1,61 @@
+name: release
+
+# Bump "version" in manifest.json, then push a matching tag
+# (git tag -a v2.1 -m "pipe 2.1" && git push origin v2.1).
+# pipe is LISTED on AMO: the upload goes into Mozilla's review queue and is published
+# after approval, so no signed .xpi comes back to attach to the GitHub release.
+#
+# Needs repo secrets AMO_JWT_ISSUER and AMO_JWT_SECRET
+# (https://addons.mozilla.org/developers/addon/api/key/).
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    needs: ci
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the release
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+
+      # AMO never accepts the same version twice, so a mismatched tag would fail late.
+      - name: Check the tag matches the manifest version
+        run: |
+          ver=$(node -p 'require("./manifest.json").version')
+          if [ "v$ver" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match version $ver in manifest.json"
+            exit 1
+          fi
+
+      - name: Install dev tools
+        run: npm ci --ignore-scripts --no-fund
+
+      # --approval-timeout 0: a listed review can take days; without it web-ext polls
+      # for 15 minutes and then fails the job even though the upload succeeded.
+      - name: Submit to AMO (listed)
+        env:
+          AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+          AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        run: |
+          if [ -z "$AMO_JWT_ISSUER" ] || [ -z "$AMO_JWT_SECRET" ]; then
+            echo "::error::set the AMO_JWT_ISSUER and AMO_JWT_SECRET repo secrets"
+            exit 1
+          fi
+          npx --no-install web-ext sign --source-dir . \
+            --ignore-files "test/**" package.json package-lock.json README.md \
+            --channel listed --approval-timeout 0 \
+            --api-key "$AMO_JWT_ISSUER" --api-secret "$AMO_JWT_SECRET"
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" --generate-notes
