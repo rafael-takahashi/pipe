@@ -51,7 +51,7 @@ jobs:
             exit 1
           fi
           npx --no-install web-ext sign --source-dir . \
-            --ignore-files "test/**" package.json package-lock.json README.md \
+            --ignore-files test "test/**" package.json package-lock.json README.md CLAUDE.md \
             --channel listed --approval-timeout 0 \
             --api-key "$AMO_JWT_ISSUER" --api-secret "$AMO_JWT_SECRET"
 

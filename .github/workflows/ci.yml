@@ -28,7 +28,7 @@ jobs:
       - name: Lint
         run: >-
           npx --no-install web-ext lint --source-dir . --warnings-as-errors
-          --ignore-files "test/**" package.json package-lock.json README.md
+          --ignore-files test "test/**" package.json package-lock.json README.md CLAUDE.md
 
   audit:
     runs-on: ubuntu-latest

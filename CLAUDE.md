@@ -3,7 +3,7 @@
 Firefox extension (MV3) that hides parts of YouTube. Listed on AMO.
 
 - Pure logic lives in `logic.js` (no browser/DOM APIs) and is tested with `node --test test/*.test.js`.
-- Lint: `npm ci --ignore-scripts && npx --no-install web-ext lint --source-dir . --warnings-as-errors --ignore-files "test/**" package.json package-lock.json README.md`
+- Lint: `npm ci --ignore-scripts && npx --no-install web-ext lint --source-dir . --warnings-as-errors --ignore-files test "test/**" package.json package-lock.json README.md CLAUDE.md`
 - Release: bump `version` in manifest.json, then tag `v<version>`; `.github/workflows/release.yml` submits to AMO.
 
 ## Rules
